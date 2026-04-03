@@ -109,6 +109,21 @@ function Home() {
     { value: "100000000", label: "Under ₹10 Cr" },
   ];
 
+  const getImageUrl = (imagePath) => {
+  if (!imagePath) return '';
+  
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+  
+  if (imagePath.startsWith('/uploads')) {
+    return `http://localhost:5050${imagePath}`;
+  }
+  
+  // Fallback
+  return imagePath;
+};
+
   const typeOptions = [
     { value: "Villa", label: "Villa" },
     { value: "Farmhouse", label: "Farmhouse" },
@@ -583,7 +598,7 @@ function Home() {
                   </span>
                   {property.image || property.images?.[0] ? (
                     <img
-                      src={property.image || property.images[0]}
+                      src={getImageUrl(property.images?.[0])}
                       alt={property.title}
                       className="prop-img w-full h-full"
                       style={{objectFit:'cover', display:'block'}}
