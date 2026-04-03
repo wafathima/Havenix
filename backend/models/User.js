@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema(
     },
     firebaseUid: {
       type: String,
-      default: null,
+      default: undefined,
       unique: true,
       sparse: true 
     },
@@ -71,6 +71,31 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null
+    },
+    // Add role-specific fields
+    companyName: {
+      type: String,
+      default: ""
+    },
+    gstNumber: {
+      type: String,
+      default: ""
+    },
+    yearsOfExperience: {
+      type: Number,
+      default: 0
+    },
+    projectsCompleted: {
+      type: Number,
+      default: 0
+    },
+    preferredLocations: {
+      type: [String],
+      default: []
+    },
+    budget: {
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true }

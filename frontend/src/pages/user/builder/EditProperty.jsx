@@ -1,8 +1,8 @@
 import { useState, useContext, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
 import API from "../../../api/axios";
-import { FaHome, FaMapMarkerAlt, FaBed, FaBath, FaRulerCombined, FaArrowLeft, FaUpload, FaTimes, FaImage,FaBolt,FaDumbbell,FaWifi,FaVideo  } from "react-icons/fa";
+import { FaHome, FaMapMarkerAlt, FaBed, FaBath, FaRulerCombined, FaArrowLeft, FaUpload, FaTimes, FaImage, FaBolt, FaDumbbell, FaWifi, FaVideo } from "react-icons/fa";
 import { MdBalcony, MdSecurity, MdKitchen, MdPets, MdAcUnit, MdOutlinePool, MdOutlineLocalParking } from "react-icons/md";
 import toast from "react-hot-toast";
 
@@ -11,8 +11,7 @@ function EditProperty() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -31,13 +30,11 @@ function EditProperty() {
     status: "available"
   });
 
+  const [images, setImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
-  const [newImages, setNewImages] = useState([]);
-  const [newImagePreviews, setNewImagePreviews] = useState([]);
-  const [imagesToDelete, setImagesToDelete] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [selectedFeatures, setSelectedFeatures] = useState([]);
 
-  // Available features for selection
   const availableFeatures = [
     { id: "swimming", label: "Swimming Pool", icon: <MdOutlinePool /> },
     { id: "garden", label: "Garden", icon: <FaHome /> },
@@ -57,41 +54,19 @@ function EditProperty() {
   const furnishedOptions = ["Furnished", "Semi-Furnished", "Unfurnished"];
   const statusOptions = ["available", "sold", "under_contract", "under_construction"];
 
-  // Fetch property data
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/uploads')) return `http://localhost:5050${imagePath}`;
+    return `http://localhost:5050/${imagePath}`;
+  };
+
   useEffect(() => {
-    const fetchProperty = async () => {
-      try {
-        setFetchLoading(true);
-        console.log("Fetching property with ID:", id);
-        const { data } = await API.get(`/seller/properties/${id}`);
-        
-        console.log("Fetched property data:", data);
-        
-console.log("Property seller:", data.seller);
-console.log("Current user:", user);
-
-let hasPermission = false;
-
-// Check different possible formats
-if (typeof data.seller === 'object' && data.seller._id) {
-  // Seller is populated as an object
-  hasPermission = data.seller._id.toString() === user?._id.toString();
-} else if (typeof data.seller === 'string') {
-  // Seller is just an ID string
-  hasPermission = data.seller.toString() === user?._id.toString();
-} else if (data.seller && typeof data.seller === 'object') {
-  // Seller might be a Mongoose object
-  hasPermission = data.seller.toString() === user?._id.toString();
-}
-
-console.log("Has permission:", hasPermission);
-
-if (!hasPermission) {
-  toast.error("You don't have permission to edit this property");
-  navigate("/seller");
-  return;
-}
-
+const fetchProperty = async () => {
+  try {
+    setFetching(true);
+    const { data } = await API.get(`/builder/properties/${id}`);
+    console.log("Fetched property:", data);
         setFormData({
           title: data.title || "",
           description: data.description || "",
@@ -106,33 +81,29 @@ if (!hasPermission) {
           furnished: data.furnished || "Semi-Furnished",
           yearBuilt: data.yearBuilt || "",
           parking: data.parking || "",
+          features: data.features || [],
           status: data.status || "available"
         });
-
-        setExistingImages(data.images || []);
-        setSelectedFeatures(data.features || []);
         
-      } catch (error) {
-        console.error("Error fetching property:", error);
-        console.error("Error response:", error.response?.data);
-        toast.error(error.response?.data?.message || "Failed to load property");
-        navigate("/seller");
-      } finally {
-        setFetchLoading(false);
-      }
-    };
+        setExistingImages(data.images || []);
+    setSelectedFeatures(data.features || []);
+    
+     } catch (error) {
+    console.error("Error fetching property:", error);
+    toast.error("Failed to load property details");
+    navigate("/builder?tab=properties");
+  } finally {
+    setFetching(false);
+  }
+};
+    
+    fetchProperty();
+  }, [id, navigate]);
 
-    if (id) {
-      fetchProperty();
-    }
-  }, [id, user, navigate]);
-
-  // Handle input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle feature selection
   const handleFeatureToggle = (featureLabel) => {
     setSelectedFeatures(prev => {
       if (prev.includes(featureLabel)) {
@@ -143,39 +114,33 @@ if (!hasPermission) {
     });
   };
 
-  // Handle new image upload
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     
-    if (files.length + existingImages.length + newImages.length > 10) {
+    if (files.length + images.length > 10) {
       toast.error("You can upload maximum 10 images");
       return;
     }
 
     const newPreviews = files.map(file => URL.createObjectURL(file));
-    setNewImagePreviews(prev => [...prev, ...newPreviews]);
-    setNewImages(prev => [...prev, ...files]);
+    setImagePreviews(prev => [...prev, ...newPreviews]);
+    setImages(prev => [...prev, ...files]);
   };
 
-  // Remove existing image
-  const removeExistingImage = (index) => {
-    const imageUrl = existingImages[index];
-    setImagesToDelete(prev => [...prev, imageUrl]);
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
+  const removeImage = (index, isExisting = false) => {
+    if (isExisting) {
+      setExistingImages(prev => prev.filter((_, i) => i !== index));
+    } else {
+      setImagePreviews(prev => prev.filter((_, i) => i !== index));
+      setImages(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
-  // Remove new image
-  const removeNewImage = (index) => {
-    setNewImagePreviews(prev => prev.filter((_, i) => i !== index));
-    setNewImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (existingImages.length + newImages.length === 0) {
-      toast.error("Please keep at least one image");
+    if (existingImages.length === 0 && images.length === 0) {
+      toast.error("Please upload at least one image");
       return;
     }
 
@@ -184,58 +149,42 @@ if (!hasPermission) {
     try {
       const formDataToSend = new FormData();
       
-      // Append all form fields
       Object.keys(formData).forEach(key => {
         if (formData[key] !== "") {
           formDataToSend.append(key, formData[key]);
         }
       });
 
-      // Append features as JSON
       formDataToSend.append('features', JSON.stringify(selectedFeatures));
-
-      // Append existing images as JSON (they are URLs)
       formDataToSend.append('existingImages', JSON.stringify(existingImages));
 
-      // Append images to delete
-      if (imagesToDelete.length > 0) {
-        formDataToSend.append('deleteImages', JSON.stringify(imagesToDelete));
-      }
-
-      // Append new images
-      newImages.forEach(image => {
+      images.forEach((image) => {
         formDataToSend.append('images', image);
       });
 
-      console.log("Submitting edit property with data:", {
-        ...formData,
-        features: selectedFeatures,
-        existingImages: existingImages,
-        newImages: newImages.length,
-        imagesToDelete: imagesToDelete
-      });
-
-      const response = await API.put(`/seller/properties/${id}`, formDataToSend, {
+      const response = await API.put(`/builder/properties/${id}`, formDataToSend, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      console.log("Edit property response:", response.data);
+      console.log("Update property response:", response.data);
       toast.success("Property updated successfully!");
-      navigate("/seller?tab=properties");
+      navigate("/builder?tab=properties");
       
     } catch (error) {
       console.error("Error updating property:", error);
-      console.error("Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Failed to update property");
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetchLoading) {
+  if (fetching) {
     return (
       <div style={{ minHeight: '100vh', background: '#FAFAF8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B7355]"></div>
+        <div style={{ textAlign: 'center' }}>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B7355] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading property details...</p>
+        </div>
       </div>
     );
   }
@@ -348,7 +297,6 @@ if (!hasPermission) {
 
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         
-        {/* Header */}
         <div style={{ marginBottom: 32 }}>
           <button
             onClick={() => navigate(-1)}
@@ -360,7 +308,7 @@ if (!hasPermission) {
             Edit Property
           </div>
           <h1 className="ep-serif" style={{ fontSize: '2.5rem', fontWeight: 400, color: '#1E1C18', lineHeight: 1.1 }}>
-            {formData.title || 'Edit Property'}
+            Edit <em style={{ fontStyle: 'italic', color: '#8B7355' }}>Property</em>
           </h1>
         </div>
 
@@ -369,28 +317,35 @@ if (!hasPermission) {
           <div style={{ background: 'white', border: '1px solid rgba(139,115,85,0.12)', borderRadius: 2, padding: 32, marginBottom: 24 }}>
             <h3 className="ep-sans" style={{ fontSize: '1rem', fontWeight: 600, color: '#1E1C18', marginBottom: 16 }}>Property Images</h3>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12, marginBottom: 16 }}>
-              {/* Existing Images */}
-              {existingImages.map((url, index) => (
-                <div key={`existing-${index}`} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(139,115,85,0.2)' }}>
-                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <button
-                    type="button"
-                    onClick={() => removeExistingImage(index)}
-                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', border: 'none', width: 24, height: 24, borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
-                  >
-                    <FaTimes size={12} />
-                  </button>
+            {/* Existing Images */}
+            {existingImages.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <label className="ep-sans" style={{ display: 'block', fontSize: '0.7rem', color: '#8B7355', marginBottom: 8 }}>Current Images</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+                  {existingImages.map((img, index) => (
+                    <div key={index} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(139,115,85,0.2)' }}>
+                      <img src={getImageUrl(img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index, true)}
+                        style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', border: 'none', width: 24, height: 24, borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
+                      >
+                        <FaTimes size={12} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
 
-              {/* New Images */}
-              {newImagePreviews.map((preview, index) => (
-                <div key={`new-${index}`} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(139,115,85,0.2)' }}>
+            {/* New Images */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12, marginBottom: 16 }}>
+              {imagePreviews.map((preview, index) => (
+                <div key={index} style={{ position: 'relative', aspectRatio: '1/1', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(139,115,85,0.2)' }}>
                   <img src={preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button
                     type="button"
-                    onClick={() => removeNewImage(index)}
+                    onClick={() => removeImage(index, false)}
                     style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.5)', border: 'none', width: 24, height: 24, borderRadius: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
                   >
                     <FaTimes size={12} />
@@ -398,15 +353,15 @@ if (!hasPermission) {
                 </div>
               ))}
               
-              {existingImages.length + newImages.length < 10 && (
+              {(existingImages.length + imagePreviews.length) < 10 && (
                 <label style={{ aspectRatio: '1/1', border: '2px dashed rgba(139,115,85,0.3)', borderRadius: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#F5F0E8' }}>
                   <FaUpload style={{ color: '#8B7355', fontSize: '1.2rem', marginBottom: 8 }} />
-                  <span className="ep-sans" style={{ fontSize: '0.7rem', color: '#8B7355' }}>Add More</span>
+                  <span className="ep-sans" style={{ fontSize: '0.7rem', color: '#8B7355' }}>Upload</span>
                   <input type="file" multiple accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                 </label>
               )}
             </div>
-            <p className="ep-sans" style={{ fontSize: '0.7rem', color: '#A89880' }}>Maximum 10 images. Click on images to remove.</p>
+            <p className="ep-sans" style={{ fontSize: '0.7rem', color: '#A89880' }}>Upload up to 10 images. First image will be the cover.</p>
           </div>
 
           {/* Basic Information */}
@@ -547,7 +502,7 @@ if (!hasPermission) {
 
           {/* Submit Buttons */}
           <div style={{ display: 'flex', gap: 16, justifyContent: 'flex-end' }}>
-            <button type="button" onClick={() => navigate('/seller')} className="ep-btn-secondary">Cancel</button>
+            <button type="button" onClick={() => navigate('/builder?tab=properties')} className="ep-btn-secondary">Cancel</button>
             <button type="submit" disabled={loading} className="ep-btn-primary">
               {loading ? 'Updating...' : 'Update Property'}
             </button>

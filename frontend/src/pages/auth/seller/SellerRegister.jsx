@@ -28,39 +28,38 @@ function SellerRegister() {
     setError("");
   };
 
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = await API.post("/user/register", {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phoneNo: formData.phoneNo,
-        role: "seller",
-        sellerDetails: {
-          companyName: formData.companyName,
-          gstNumber: formData.gstNumber,
-          yearsOfExperience: parseInt(formData.yearsOfExperience)
-        }
-      });
-      const userData = res.data;
-      const token = userData.token;
-      if (!token) throw new Error("No authentication token received");
-      const { token: _, ...userWithoutToken } = userData;
-      localStorage.setItem("token", token);
-      login(userWithoutToken, token);
-      toast.success("Seller account created successfully!");
-      navigate("/seller/dashboard");
-    } catch (error) {
-      const errMsg = error.response?.data?.message || error.message || "Registration failed";
-      setError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  try {
+    const res = await API.post("/user/register", {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      phoneNo: formData.phoneNo,
+      role: "seller",
+      companyName: formData.companyName,
+      gstNumber: formData.gstNumber,
+      yearsOfExperience: parseInt(formData.yearsOfExperience) || 0
+    });
+    const userData = res.data;
+    const token = userData.token;
+    if (!token) throw new Error("No authentication token received");
+    const { token: _, ...userWithoutToken } = userData;
+    localStorage.setItem("token", token);
+    login(userWithoutToken, token);
+    toast.success("Seller account created successfully!");
+    navigate("/seller");
+  } catch (error) {
+    const errMsg = error.response?.data?.message || error.message || "Registration failed";
+    setError(errMsg);
+    toast.error(errMsg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F0E8', padding: 24, fontFamily: "'DM Sans', sans-serif" }}>

@@ -179,7 +179,7 @@ export default function Expenses() {
         }
       });
       
-      formDataToSend.append('projectId', selectedProject._id);
+      formDataToSend.append('project', selectedProject._id);
       
       if (receipt) {
         formDataToSend.append('receipt', receipt);

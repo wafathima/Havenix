@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef , useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api/axios';
+import   {useSocket }    from '../../context/SocketContext';
+
 import {
   HiOutlineBell,
   HiOutlineMail,
@@ -13,6 +15,7 @@ import {
 } from 'react-icons/hi';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
+import SocketProvider from '../../context/SocketContext';
 
 export default function NotificationBell({ user }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +24,34 @@ export default function NotificationBell({ user }) {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+ const { socket } = useSocket(); 
+
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    console.log('🎧 Setting up notification listener for user:', user._id);
+
+    // Listen for new notifications
+    const handleNewNotification = (notification) => {
+      console.log('📢 New notification received:', notification);
+      
+      // Add to notifications list
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+      
+      // Show toast notification
+      toast.success(notification.title, {
+        duration: 4000,
+        position: 'top-right',
+      });
+    };
+
+    socket.on('new_notification', handleNewNotification);
+
+    return () => {
+      socket.off('new_notification', handleNewNotification);
+    };
+  }, [socket, user]);
 
   useEffect(() => {
     if (user) {
@@ -121,24 +152,30 @@ export default function NotificationBell({ user }) {
     await handleMarkAsRead(notificationId);
   };
 
-  const getNotificationIcon = (type) => {
-    const iconClass = "w-5 h-5";
-    switch (type) {
-      case 'message':
-        return <HiOutlineChat className={`${iconClass} text-blue-500`} />;
-      case 'enquiry':
-        return <HiOutlineMail className={`${iconClass} text-yellow-500`} />;
-      case 'enquiry_accepted':
-        return <HiOutlineCheckCircle className={`${iconClass} text-green-500`} />;
-      case 'enquiry_rejected':
-        return <HiOutlineXCircle className={`${iconClass} text-red-500`} />;
-      case 'project_update':
-      case 'milestone_update':
-        return <HiOutlineDocumentText className={`${iconClass} text-purple-500`} />;
-      default:
-        return <HiOutlineBell className={`${iconClass} text-gray-500`} />;
-    }
-  };
+const getNotificationIcon = (type) => {
+  const iconClass = "w-5 h-5";
+  switch (type) {
+    case 'message':
+      return <HiOutlineChat className={`${iconClass} text-blue-500`} />;
+    case 'enquiry':
+      return <HiOutlineMail className={`${iconClass} text-yellow-500`} />;
+    case 'enquiry_accepted':
+      return <HiOutlineCheckCircle className={`${iconClass} text-green-500`} />;
+    case 'enquiry_rejected':
+      return <HiOutlineXCircle className={`${iconClass} text-red-500`} />;
+    case 'purchase_request':
+      return <HiOutlineDocumentText className={`${iconClass} text-purple-500`} />;
+    case 'purchase_accepted':
+      return <HiOutlineCheckCircle className={`${iconClass} text-green-500`} />;
+    case 'purchase_rejected':
+      return <HiOutlineXCircle className={`${iconClass} text-red-500`} />;
+    case 'project_update':
+    case 'milestone_update':
+      return <HiOutlineDocumentText className={`${iconClass} text-purple-500`} />;
+    default:
+      return <HiOutlineBell className={`${iconClass} text-gray-500`} />;
+  }
+};
 
   return (
     <div style={{ position: 'relative' }} ref={dropdownRef}>

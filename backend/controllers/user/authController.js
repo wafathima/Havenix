@@ -8,39 +8,59 @@ const { sendPasswordResetEmail } = require("../../utils/emailService")
 // ================= REGISTER =================
 exports.registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        message: "Password must be at least 6 characters",
-      });
-    }
+    const { 
+      name, 
+      email, 
+      password, 
+      role, 
+      phoneNo,
+      companyName,
+      gstNumber,
+      yearsOfExperience,
+      projectsCompleted,
+      preferredLocations,
+      budget
+    } = req.body;
 
     const userExists = await User.findOne({ email });
-
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    let hashedPassword = null;
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters" });
+      }
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
 
-    const user = await User.create({
+    const userData = {
       name,
       email,
       password: hashedPassword,
       role: role || null,
+      phoneNo: phoneNo || "",
       address: "",
       zipCode: "",
       city: "",
-      phoneNo: "",
       bio: "",
       profilePic: "",
       bgGradient: "from-[#0a2a5e] to-[#1e4b8a]",
-    });
+    };
+
+    if (role === "seller") {
+      userData.companyName = companyName || "";
+      userData.gstNumber = gstNumber || "";
+      userData.yearsOfExperience = yearsOfExperience || 0;
+    } else if (role === "builder") {
+      userData.projectsCompleted = projectsCompleted || 0;
+    } else if (role === "buyer") {
+      userData.preferredLocations = preferredLocations || [];
+      userData.budget = budget || 0;
+    }
+
+    const user = await User.create(userData);
 
     res.status(201).json({
       _id: user._id,
@@ -54,14 +74,19 @@ exports.registerUser = async (req, res) => {
       bio: user.bio,
       profilePic: user.profilePic,
       bgGradient: user.bgGradient,
+      companyName: user.companyName,
+      gstNumber: user.gstNumber,
+      yearsOfExperience: user.yearsOfExperience,
+      projectsCompleted: user.projectsCompleted,
+      preferredLocations: user.preferredLocations,
+      budget: user.budget,
       token: generateToken(user),
     });
   } catch (error) {
+    console.error("Registration error:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 // ================= LOGIN =================
 exports.loginUser = async (req, res) => {
@@ -74,7 +99,6 @@ exports.loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid Email" });
     }
 
-    // CHECK IF USER IS BLOCKED - ADD THIS
     if (user.isBlocked) {
       return res.status(403).json({ 
         message: "Your account has been blocked. Please contact administrator.",
@@ -102,7 +126,7 @@ exports.loginUser = async (req, res) => {
       bio: user.bio,
       profilePic: user.profilePic,
       bgGradient: user.bgGradient,
-      isBlocked: user.isBlocked, // Include this in response
+      isBlocked: user.isBlocked, 
       token: generateToken(user),
     });
   } catch (error) {
@@ -119,7 +143,6 @@ exports.getProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
     
-    // CHECK IF USER IS BLOCKED
     if (user.isBlocked) {
       return res.status(403).json({ 
         message: "Your account has been blocked. Please contact administrator.",
@@ -407,7 +430,6 @@ exports.googleLogin = async (req, res) => {
     console.log("🔍 User found by email:", user ? "Yes" : "No");
 
     if (user) {
-      // User exists - update Firebase UID if not set
       if (!user.firebaseUid) {
         console.log("📝 Updating existing user with Firebase UID");
         user.firebaseUid = firebaseUid;
@@ -446,7 +468,6 @@ exports.googleLogin = async (req, res) => {
       });
     }
 
-    // Generate token using your existing generateToken function
     const token = generateToken(user);
     console.log("✅ Login successful for:", user.email);
 

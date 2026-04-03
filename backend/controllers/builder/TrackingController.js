@@ -114,7 +114,7 @@ const fetchTrackingEntries = async (projectId) => {
   } finally {
     setLoading(p => ({ ...p, tracking: false }));
   }
-};
+ };
 
 const createTrackingEntry = async (req, res) => {
   try {
@@ -802,5 +802,5 @@ module.exports = {
   
   // Analytics
   getTrackingAnalytics,
-  getTrackingSummary
+  getTrackingSummary,
 };

@@ -28,34 +28,34 @@ function BuilderRegister() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = await API.post("/user/register", {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        phoneNo: formData.phoneNo,
-        role: "builder",
-        builderDetails: { projectsCompleted: parseInt(formData.projectsCompleted) }
-      });
-      const userData = res.data;
-      const token = userData.token;
-      if (!token) throw new Error("No authentication token received");
-      const { token: _, ...userWithoutToken } = userData;
-      localStorage.setItem("token", token);
-      login(userWithoutToken, token);
-      toast.success("Builder account created successfully!");
-      navigate("/builder/dashboard");
-    } catch (error) {
-      const errMsg = error.response?.data?.message || error.message || "Registration failed";
-      setError(errMsg);
-      toast.error(errMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  try {
+    const res = await API.post("/user/register", {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      phoneNo: formData.phoneNo,
+      role: "builder",
+      projectsCompleted: parseInt(formData.projectsCompleted) || 0
+    });
+    const userData = res.data;
+    const token = userData.token;
+    if (!token) throw new Error("No authentication token received");
+    const { token: _, ...userWithoutToken } = userData;
+    localStorage.setItem("token", token);
+    login(userWithoutToken, token);
+    toast.success("Builder account created successfully!");
+    navigate("/builder");
+  } catch (error) {
+    const errMsg = error.response?.data?.message || error.message || "Registration failed";
+    setError(errMsg);
+    toast.error(errMsg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fields = [
     { name: 'name',              label: 'Full Name',           type: 'text',     placeholder: 'John Doe',             required: true  },

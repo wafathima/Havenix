@@ -128,7 +128,7 @@ function UserDetails() {
       const response = await API.delete(`/admin/users/${user._id}`);
       console.log('Delete response:', response.data);
       toast.success(response.data.message || "User deleted successfully");
-      navigate('/admin/users'); // Go back to users list
+      navigate('/admin/users');
     } catch (error) {
       console.error("Error deleting user:", error);
       console.error("Error response:", error.response?.data);

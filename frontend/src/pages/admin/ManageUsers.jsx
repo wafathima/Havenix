@@ -155,24 +155,6 @@ function ManageUsers() {
     }
   };
 
-  // const handleDeleteUser = async (userId) => {
-  //   if (!window.confirm("⚠️ Are you sure you want to delete this user? This action cannot be undone and will remove all associated data.")) {
-  //     return;
-  //   }
-
-  //   try {
-  //     setActionLoading(true);
-  //     const response = await API.delete(`/admin/users/${userId}`);
-  //     toast.success(response.data.message || "User deleted successfully");
-  //     fetchUsers();
-  //   } catch (error) {
-  //     console.error("Error deleting user:", error);
-  //     toast.error(error.response?.data?.message || "Failed to delete user");
-  //   } finally {
-  //     setActionLoading(false);
-  //   }
-  // };
-
   const handleRoleChange = async () => {
     if (!selectedUser || !newRole) return;
     

@@ -13,6 +13,7 @@ import Properties from "./pages/Public/Properties";
 import PropertyDetails from "./pages/Public/PropertyDetails";
 import Settings from "./pages/user/Settings";
 
+
 // Auth Pages 
 import BuyerLogin from "./pages/auth/buyer/BuyerLogin";
 import BuyerRegister from "./pages/auth/buyer/BuyerRegister";
@@ -27,8 +28,7 @@ import Contact from "./pages/user/Contact";
 import BuyerDashboard from "./pages/user/buyer/BuyerDashboard";
 import SellerDashboard from "./pages/user/seller/SellerDashboard";
 import BuilderDashboard from "./pages/user/builder/BuilderDashboard";
-import AddProperty from "./pages/user/seller/AddProperty";
-import EditProperty from "./pages/user/seller/EditProperty";
+import EditProperty from "./pages/user/builder/EditProperty";
 import AddProject from "./pages/user/builder/AddProject";
 import ProjectDetails from "./pages/user/builder/ProjectDetails";
 import ExpenseDetails from "./pages/user/builder/ExpenseDetails";
@@ -37,6 +37,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Notifications from "./pages/user/Notifications"; 
 import { SocketProvider } from "./context/SocketContext"; 
+import AddProperty from "./pages/user/builder/AddProperty";
 
 // Admin Pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -70,6 +71,7 @@ function App() {
             <Route path="/login/buyer" element={<BuyerLogin />} />
             <Route path="/login/seller" element={<SellerLogin />} />
             <Route path="/login/builder" element={<BuilderLogin />} />
+
             
             {/* Role-Specific Register Pages */}
             <Route path="/register/buyer" element={<BuyerRegister />} />
@@ -142,29 +144,6 @@ function App() {
               }
             >
               <Route index element={<Contact />} />
-            </Route>
-
-            {/* Add Property - Sellers only */}
-            <Route
-              path="/seller/add-property"
-              element={
-                <ProtectedRoute requiredRole="seller">
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<AddProperty />} />
-            </Route>
-
-            <Route
-              path="/seller/edit-property/:id"
-              element={
-                <ProtectedRoute requiredRole="seller">
-                  <MainLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<EditProperty />} />
             </Route>
 
             {/* BUYER Dashboard */}
@@ -246,6 +225,28 @@ function App() {
 
   <Route path="/forgot-password" element={<ForgotPassword />} />
 <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+<Route
+  path="/builder/add-property"
+  element={
+    <ProtectedRoute requiredRole="builder">
+      <MainLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route index element={<AddProperty />} />
+</Route>
+
+<Route 
+  path="/builder/edit-property/:id" 
+  element={
+    <ProtectedRoute requiredRole="builder">
+      <MainLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route index element={<EditProperty />} />
+</Route>
           </Routes>
           </SocketProvider>
         </AuthProvider>

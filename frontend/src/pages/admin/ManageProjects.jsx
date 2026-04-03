@@ -81,20 +81,6 @@ function ManageProjects() {
     navigate(`/admin/projects/${projectId}`);
   };
 
-  // const handleDeleteProject = async (projectId) => {
-  //   if (!window.confirm("⚠️ Are you sure you want to delete this project? This will also delete all associated expenses and data.")) {
-  //     return;
-  //   }
-
-  //   try {
-  //     const response = await API.delete(`/admin/projects/${projectId}`);
-  //     toast.success(response.data.message || "Project deleted successfully");
-  //     fetchProjects();
-  //   } catch (error) {
-  //     console.error("Error deleting project:", error);
-  //     toast.error(error.response?.data?.message || "Failed to delete project");
-  //   }
-  // };
 
   const handlePageChange = (newPage) => {
     setPagination(prev => ({ ...prev, page: newPage }));

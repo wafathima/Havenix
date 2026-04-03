@@ -3,7 +3,8 @@ import { io } from 'socket.io-client';
 import { AuthContext } from './AuthContext';
 import toast from 'react-hot-toast';
 
-const SocketContext = createContext();
+// Create and export the context
+export const SocketContext = createContext();
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
@@ -19,53 +20,36 @@ export const SocketProvider = ({ children }) => {
   const [typingUsers, setTypingUsers] = useState({});
   const { user } = useContext(AuthContext);
 
-  // useEffect(() => {
-    // if (!user) return;
+  useEffect(() => {
+    if (!user) return;
 
-    // // Connect to socket server
-    // const newSocket = io('http://localhost:5050', {
-    //   withCredentials: true
-    // });
+    console.log('Attempting to connect to Socket.IO...');
+    
+    const newSocket = io('http://localhost:5050', {
+      withCredentials: true,
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
 
-    // setSocket(newSocket);
+    newSocket.on('connect', () => {
+      console.log('✅ Socket connected successfully! ID:', newSocket.id);
+      newSocket.emit('user-authenticated', user._id);
+    });
 
-    useEffect(() => {
-  if (!user) return;
+    newSocket.on('connected', (data) => {
+      console.log('Server confirmation:', data);
+    });
 
-  console.log('Attempting to connect to Socket.IO...');
-  
-  const newSocket = io('http://localhost:5050', {
-    withCredentials: true,
-    transports: ['websocket', 'polling'],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000
-  });
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Socket connection error:', error.message);
+    });
 
-  // Handle connection events
-  newSocket.on('connect', () => {
-    console.log('✅ Socket connected successfully! ID:', newSocket.id);
-    newSocket.emit('user-authenticated', user._id);
-  });
+    newSocket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+    });
 
-  newSocket.on('connected', (data) => {
-    console.log('Server confirmation:', data);
-  });
-
-  newSocket.on('connect_error', (error) => {
-    console.error('❌ Socket connection error:', error.message);
-  });
-
-  newSocket.on('disconnect', (reason) => {
-    console.log('Socket disconnected:', reason);
-  });
-
-  setSocket(newSocket);
-
-    // Authenticate user
-    newSocket.emit('user-authenticated', user._id);
-
-    // Handle online status
     newSocket.on('user-online', (userId) => {
       setOnlineUsers(prev => new Set([...prev, userId]));
     });
@@ -78,7 +62,6 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
-    // Handle new message notifications
     newSocket.on('message-notification', (data) => {
       toast.custom((t) => (
         <div
@@ -120,7 +103,6 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
-    // Handle typing indicators
     newSocket.on('user-typing', ({ chatId, userId, userName }) => {
       setTypingUsers(prev => ({
         ...prev,
@@ -136,39 +118,35 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
-    // Handle read receipts
     newSocket.on('messages-read-receipt', ({ chatId, userId, messageIds }) => {
       // Update message read status in your UI
-      // This will be handled by the ChatInterface component
     });
+
+    setSocket(newSocket);
 
     return () => {
       newSocket.disconnect();
     };
   }, [user]);
 
-  // Join chat room
   const joinChat = (chatId) => {
     if (socket) {
       socket.emit('join-chat', chatId);
     }
   };
 
-  // Leave chat room
   const leaveChat = (chatId) => {
     if (socket) {
       socket.emit('leave-chat', chatId);
     }
   };
 
-  // Send message
   const sendMessage = (chatId, message) => {
     if (socket) {
       socket.emit('send-message', { chatId, message });
     }
   };
 
-  // Start typing
   const startTyping = (chatId) => {
     if (socket) {
       socket.emit('typing-start', {
@@ -179,7 +157,6 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
-  // Stop typing
   const stopTyping = (chatId) => {
     if (socket) {
       socket.emit('typing-stop', {
@@ -189,7 +166,6 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
-  // Mark messages as read
   const markMessagesRead = (chatId, messageIds) => {
     if (socket) {
       socket.emit('messages-read', {
@@ -218,3 +194,5 @@ export const SocketProvider = ({ children }) => {
     </SocketContext.Provider>
   );
 };
+
+export default SocketProvider;

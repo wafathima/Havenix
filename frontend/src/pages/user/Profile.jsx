@@ -431,19 +431,6 @@ useEffect(() => {
               {/* Divider */}
               <div style={{ height: 1, background: 'rgba(139,115,85,0.1)', margin: '0 0' }} />
 
-              {/* Stats */}
-              {/* <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}>
-                {[
-                  { Icon: Home,  label: 'Properties', value: '12' },
-                  { Icon: Heart, label: 'Saved',       value: '8'  },
-                  { Icon: Star,  label: 'Rating',      value: '4.8'},
-                ].map(({ Icon, label, value }, i) => (
-                  <div key={i} className="pf-stat-box">
-                    <div className="pf-serif" style={{ fontSize: '1.5rem', fontWeight: 500, color: '#1E1C18', lineHeight: 1 }}>{value}</div>
-                    <div className="pf-sans" style={{ fontSize: '0.58rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#A89880', marginTop: 4 }}>{label}</div>
-                  </div>
-                ))}
-              </div> */}
 
               {/* Stats - Role Specific */}
 <div style={{ display: 'grid', gridTemplateColumns: user?.role === 'buyer' ? 'repeat(1,1fr)' : 'repeat(2,1fr)', gap: '10px' }}>

@@ -82,59 +82,45 @@ const createProperty = async (req, res) => {
 
 const getAllProperties = async (req, res) => {
   try {
-    const {
-      location,
-      minPrice,
-      maxPrice,
-      keyword,
-      sort
-    } = req.query;
-
-    let filter = {};
-
-    if (location) {
-      filter.location = { $regex: location, $options: "i" };
-    }
-
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = Number(minPrice);
-      if (maxPrice) filter.price.$lte = Number(maxPrice);
-    }
-
-    if (keyword) {
-      filter.$or = [
-        { title: { $regex: keyword, $options: "i" } },
-        { description: { $regex: keyword, $options: "i" } }
-      ];
-    }
-
-    let sortOption = {};
-    if (sort === "price_asc") sortOption.price = 1;
-    if (sort === "price_desc") sortOption.price = -1;
-    if (sort === "newest") sortOption.createdAt = -1;
-
-    const properties = await Property.find(filter)
-      .populate("seller", "name email")
-      .sort(sortOption);
+   
+    const properties = await Property.find({
+      $or: [
+        { seller: { $exists: true, $ne: null } },
+        { 
+          builder: { $exists: true, $ne: null },
+          status: "available" 
+        }
+      ]
+    })
+      .populate("seller", "name email profilePic")
+      .populate("builder", "name email companyName profilePic city phone")
+      .sort("-createdAt");
 
     res.json(properties);
-
   } catch (error) {
+    console.error("Error fetching properties:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
+
 const getSingleProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id)
-      .populate("seller", "name email");
+      .populate("seller", "name email profilePic")
+      .populate("builder", "name email companyName profilePic city phone")
+      .populate("owner", "name email role");
 
     if (!property)
       return res.status(404).json({ message: "Property not found" });
 
+    // Increment view count
+    property.views = (property.views || 0) + 1;
+    await property.save();
+
     res.json(property);
   } catch (error) {
+    console.error("Error fetching property:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -146,7 +132,12 @@ const updateProperty = async (req, res) => {
     if (!property)
       return res.status(404).json({ message: "Property not found" });
 
-    if (property.seller.toString() !== req.user._id.toString())
+    // Check if seller owns this property
+    if (property.seller && property.seller.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Not authorized" });
+    
+    // Check if builder owns this property
+    if (property.builder && property.builder.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Not authorized" });
 
     let imageUrls = property.images || [];
@@ -172,7 +163,6 @@ const updateProperty = async (req, res) => {
         newImageUrls.push(result.secure_url);
       }
 
-      // Add to general images
       imageUrls = [...imageUrls, ...newImageUrls];
 
       if (req.body.newRoomTypes) {
@@ -186,6 +176,17 @@ const updateProperty = async (req, res) => {
       } else {
         roomImageUrls.exterior = [...roomImageUrls.exterior, ...newImageUrls];
       }
+    }
+
+    // Delete images if specified
+    if (req.body.deleteImages) {
+      const imagesToDelete = JSON.parse(req.body.deleteImages);
+      imageUrls = imageUrls.filter(url => !imagesToDelete.includes(url));
+      
+      // Also remove from roomImages
+      Object.keys(roomImageUrls).forEach(room => {
+        roomImageUrls[room] = roomImageUrls[room].filter(url => !imagesToDelete.includes(url));
+      });
     }
 
     // Update property fields
@@ -223,13 +224,19 @@ const deleteProperty = async (req, res) => {
     if (!property)
       return res.status(404).json({ message: "Property not found" });
 
-    if (property.seller.toString() !== req.user._id.toString())
+    // Check if seller owns this property
+    if (property.seller && property.seller.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Not authorized" });
+    
+    // Check if builder owns this property
+    if (property.builder && property.builder.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Not authorized" });
 
     await property.deleteOne();
 
     res.json({ message: "Property deleted successfully" });
   } catch (error) {
+    console.error("Error deleting property:", error);
     res.status(500).json({ message: error.message });
   }
 };

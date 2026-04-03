@@ -1,5 +1,6 @@
 const Notification = require('../../models/Notification');
 const User = require('../../models/User');
+const { getIO } = require('../../socket');
 
 // Get user's notifications
 const getNotifications = async (req, res) => {
@@ -129,24 +130,44 @@ const deleteNotification = async (req, res) => {
   }
 };
 
-// Create notification (internal use)
+
 const createNotification = async (recipientId, senderId, type, title, message, data = {}) => {
   try {
+    // Validate required fields
+    if (!recipientId || !senderId || !type) {
+      console.error('Missing required fields for notification:', { recipientId, senderId, type });
+      return null;
+    }
+
     const notification = new Notification({
       recipient: recipientId,
       sender: senderId,
-      type,
-      title,
-      message,
-      data
+      type: type,
+      title: title,
+      message: message,
+      data: data
     });
     
     await notification.save();
     
+    // Populate sender info
+    const populatedNotification = await Notification.findById(notification._id)
+      .populate('sender', 'name profilePic role');
+    
     // Emit socket event for real-time notification
-    const io = req?.app?.get('io');
-    if (io) {
-      io.to(`user_${recipientId}`).emit('new_notification', notification);
+    try {
+      const io = getIO();
+      if (io) {
+        const roomName = `user-${recipientId.toString()}`;
+        console.log(`📡 Emitting to room: ${roomName}`);
+        io.to(roomName).emit('new_notification', populatedNotification);
+        console.log(`✅ Notification emitted successfully to ${roomName}`);
+      } else {
+        console.log('⚠️ Socket.IO not initialized, notification saved but not emitted');
+      }
+    } catch (socketError) {
+      console.error('❌ Socket emission failed:', socketError);
+      // Don't fail the notification creation if socket fails
     }
     
     return notification;

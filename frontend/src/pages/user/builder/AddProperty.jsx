@@ -90,7 +90,7 @@ function AddProperty() {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-// Handle form submit
+
 const handleSubmit = async (e) => {
   e.preventDefault();
   
@@ -107,16 +107,19 @@ const handleSubmit = async (e) => {
     // Append all form fields
     Object.keys(formData).forEach(key => {
       if (formData[key] !== "") {
-        formDataToSend.append(key, formData[key]);
-        console.log(`Appending ${key}:`, formData[key]);
+        // Don't append features here - we'll handle it separately
+        if (key !== 'features') {
+          formDataToSend.append(key, formData[key]);
+          console.log(`Appending ${key}:`, formData[key]);
+        }
       }
     });
 
-    // Append features as JSON
+    // Append features as a JSON string
     console.log("Selected features:", selectedFeatures);
     formDataToSend.append('features', JSON.stringify(selectedFeatures));
 
-    // Append images - MAKE SURE THIS IS WORKING
+    // Append images
     console.log("Images to upload:", images.length);
     images.forEach((image, index) => {
       formDataToSend.append('images', image);
@@ -133,22 +136,31 @@ const handleSubmit = async (e) => {
       }
     }
 
-    const response = await API.post('/seller/properties', formDataToSend, {
+    // POST to builder/properties endpoint
+    const response = await API.post('/builder/properties', formDataToSend, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
 
     console.log("Add property response:", response.data);
     toast.success("Property added successfully!");
-    navigate("/seller?tab=properties");
+    navigate("/builder?tab=properties");
     
   } catch (error) {
     console.error("Error adding property:", error);
     console.error("Error response:", error.response?.data);
-    toast.error(error.response?.data?.message || "Failed to add property");
+    
+    // Show more detailed error message
+    if (error.response?.data?.errors) {
+      const errorMessages = error.response.data.errors.map(err => err.message).join(', ');
+      toast.error(`Validation failed: ${errorMessages}`);
+    } else {
+      toast.error(error.response?.data?.message || "Failed to add property");
+    }
   } finally {
     setLoading(false);
   }
 };
+
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAF8', fontFamily: "'DM Sans', sans-serif", padding: '40px 24px' }}>
@@ -460,3 +472,5 @@ const handleSubmit = async (e) => {
 }
 
 export default AddProperty;
+
+

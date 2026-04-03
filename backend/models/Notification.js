@@ -14,7 +14,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['message', 'enquiry', 'enquiry_accepted', 'enquiry_rejected', 'project_update', 'milestone_update'],
+    enum: ['message', 'enquiry', 'enquiry_accepted', 'enquiry_rejected', 'project_update', 'milestone_update', 'purchase_request', 'purchase_accepted', 'purchase_rejected'], // Added purchase types
     required: true
   },
   title: {
@@ -30,6 +30,8 @@ const notificationSchema = new mongoose.Schema({
     enquiryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Enquiry' },
     projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project' },
     milestoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'Milestone' },
+    propertyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Property' }, // Added propertyId
+    purchaseRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'PurchaseRequest' }, // Added purchaseRequestId
     url: { type: String }
   },
   isRead: {

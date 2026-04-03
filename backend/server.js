@@ -14,7 +14,8 @@ const projectRoutes = require('./routes/builder/projectRoutes');
 const expenseRoutes = require('./routes/builder/expenseRoutes');
 const trackingRoutes = require('./routes/builder/trackingRoutes');
 const notificationRoutes = require("./routes/user/notificationRoutes");
-
+const builderPropertyRoutes = require("./routes/builder/propertyRoutes");
+const sellerPropertyPurchaseRoutes = require("./routes/seller/propertyPurchaseRoutes");
 
 dotenv.config();
 connectDB();
@@ -63,7 +64,11 @@ app.use("/api/auth", require("./routes/user/authRoutes"));
 app.use("/api/admin", require("./routes/admin/adminRoutes"));
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/enquiries", require("./routes/user/enquiryRoutes"));
-
+app.use("/api/builder/properties", builderPropertyRoutes);
+app.use("/api/seller/properties/purchased", sellerPropertyPurchaseRoutes);
+app.use("/api/purchase-requests", require("./routes/seller/propertyPurchaseRoutes"));
+app.use("/api/purchase-requests", require("./routes/seller/purchaseRequestRoutes"));
+app.use("/api/seller/builder", require("./routes/seller/builderRoutes"));
 
 
 app.use("/api/builder/expenses", expenseRoutes);

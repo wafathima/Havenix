@@ -11,7 +11,7 @@ import {
   FaDumbbell, FaShieldAlt, FaBolt, FaTree, FaCamera, FaVideo,
   FaTshirt, FaFire, FaUserCircle, FaTimes, FaSpinner,FaArrowUp,FaTint,
   FaTrash,FaBuilding,FaChild, FaFutbol , FaBasketballBall ,FaCompass ,FaCloudRain, 
-  FaRecycle , FaGlassCheers ,
+  FaRecycle , FaGlassCheers  
 } from "react-icons/fa";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { MdBalcony, MdSecurity, MdKitchen, MdPets, MdAcUnit } from "react-icons/md";
@@ -29,6 +29,8 @@ function PropertyDetails() {
   const [similarLoading, setSimilarLoading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState('exterior');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [purchasing, setPurchasing] = useState(false);
+
   const [roomImages, setRoomImages] = useState({
     exterior: [],
     bedroom: [],
@@ -49,6 +51,7 @@ function PropertyDetails() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [propertyReviews, setPropertyReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+
   const [reviewsPagination, setReviewsPagination] = useState({
   page: 1,
   total: 0,
@@ -60,7 +63,6 @@ const [ratingDistribution, setRatingDistribution] = useState({
 });
 const [showReviewModal, setShowReviewModal] = useState(false);
 
-  // Fallback images for each room type
   const fallbackImages = {
     exterior: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800",
     bedroom: "https://photos.zillowstatic.com/fp/7f44e4e347422aa58fc38f4203f87220-p_e.webp",
@@ -336,6 +338,51 @@ const averageRating = property?.averageRating ||
 
 const totalReviews = property?.totalReviews || propertyReviews.length;
 
+// Add this function
+const handlePurchaseProperty = async () => {
+  if (!user) {
+    toast.error("Please login to purchase");
+    navigate("/purpose?type=register", { state: { from: `/property/${id}` } });
+    return;
+  }
+  
+  if (user.role !== 'seller') {
+    toast.error("Only sellers can purchase properties");
+    return;
+  }
+
+  if (!property?.builder) {
+    toast.error("This property cannot be purchased");
+    return;
+  }
+
+  if (property.status !== 'available') {
+    toast.error("This property is not available for purchase");
+    return;
+  }
+
+  setPurchasing(true);
+  try {
+    const response = await API.post(`/seller/properties/purchased/purchase/${id}`);
+    
+    if (response.data.success) {
+      toast.success("Property purchased successfully!");
+      // Refresh property details
+      const { data } = await API.get(`/properties/${id}`);
+      setProperty(data);
+      
+      setTimeout(() => {
+        navigate('/seller?tab=properties');
+      }, 2000);
+    }
+  } catch (error) {
+    console.error("Error purchasing property:", error);
+    toast.error(error.response?.data?.message || "Failed to purchase property");
+  } finally {
+    setPurchasing(false);
+  }
+};
+
   const handleContactOwner = () => {
     if (!user) { toast.error("Please login to contact the owner"); navigate("/purpose?type=register", { state: { from: `/property/${id}` } }); return; }
     if (user.role === "seller") { toast.error("Sellers cannot contact other sellers"); return; }
@@ -496,6 +543,13 @@ const getImageUrl = (imagePath) => {
   
   // Fallback
   return imagePath;
+};
+
+const getDisplayStatus = (status) => {
+  if (status === 'sold') {
+    return 'available';
+  }
+  return status || 'available';
 };
 
   const currentRoomImages = roomImages[selectedRoom] || [];
@@ -996,11 +1050,8 @@ const getImageUrl = (imagePath) => {
     </div>
   </div>
 )}
-
                   </div>
                 )}
-
-               
 
                 {/* Amenities Tab */}
 {activeTab === "amenities" && (
@@ -1365,7 +1416,6 @@ const getImageUrl = (imagePath) => {
 />
   </div>
 )}
-
               </div>
             </div>
           </div>
@@ -1387,7 +1437,7 @@ const getImageUrl = (imagePath) => {
                   {[
                     { label:'Est. EMI', value:`₹ ${Math.round(property.price * 0.0074).toLocaleString('en-IN')}/mo*` },
                     { label:'Booking Amount', value:`₹ ${Math.round(property.price * 0.1).toLocaleString('en-IN')}` },
-                    { label:'Status', value: property.status || "Available", isStatus: true },
+                    { label:'Status', value: getDisplayStatus(property.status), isStatus: true },
                   ].map(item => (
                     <div key={item.label} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid rgba(139,115,85,0.1)'}}>
                       <span className="pd-sans" style={{fontSize:'0.78rem', color:'#8B7355'}}>{item.label}</span>
@@ -1395,9 +1445,21 @@ const getImageUrl = (imagePath) => {
                         <span className="pd-sans" style={{
                           fontSize:'0.65rem', letterSpacing:'0.1em', textTransform:'uppercase', fontWeight:600,
                           padding:'3px 10px', borderRadius:2,
-                          background: property.status === 'available' ? 'rgba(139,115,85,0.1)' : property.status === 'sold' ? 'rgba(200,80,60,0.1)' : 'rgba(196,169,122,0.15)',
-                          color: property.status === 'available' ? '#8B7355' : property.status === 'sold' ? '#C4503C' : '#C4A97A',
-                          border: `1px solid ${property.status === 'available' ? 'rgba(139,115,85,0.3)' : property.status === 'sold' ? 'rgba(196,80,60,0.3)' : 'rgba(196,169,122,0.3)'}`,
+                          background: getDisplayStatus(property.status) === 'available' 
+  ? 'rgba(139,115,85,0.1)' 
+  : getDisplayStatus(property.status) === 'sold' 
+    ? 'rgba(200,80,60,0.1)' 
+    : 'rgba(196,169,122,0.15)',
+color: getDisplayStatus(property.status) === 'available' 
+  ? '#8B7355' 
+  : getDisplayStatus(property.status) === 'sold' 
+    ? '#C4503C' 
+    : '#C4A97A',
+border: `1px solid ${getDisplayStatus(property.status) === 'available' 
+  ? 'rgba(139,115,85,0.3)' 
+  : getDisplayStatus(property.status) === 'sold' 
+    ? 'rgba(196,80,60,0.3)' 
+    : 'rgba(196,169,122,0.3)'}`,
                         }}>{item.value}</span>
                       ) : (
                         <span className="pd-sans" style={{fontSize:'0.82rem', fontWeight:500, color:'#1E1C18'}}>{item.value}</span>
@@ -1418,27 +1480,81 @@ const getImageUrl = (imagePath) => {
   <FaEnvelope size={13} /> {sending ? 'Starting Chat...' : 'Send Message'}
 </button>
 
-                {/* Seller info */}
-                <div style={{marginTop:20, paddingTop:20, borderTop:'1px solid rgba(139,115,85,0.12)'}}>
-                  <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:14}}>
-                    <div style={{width:44, height:44, background:'#F5F0E8', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(139,115,85,0.2)', flexShrink:0}}>
-                      <FaUserTie style={{color:'#8B7355', fontSize:'1.1rem'}} />
-                    </div>
-                    <div>
-                      <p className="pd-sans" style={{fontWeight:500, color:'#1E1C18', fontSize:'0.875rem'}}>{property.seller?.name || "Property Owner"}</p>
-                      <p className="pd-sans" style={{fontSize:'0.65rem', color:'#8B7355', letterSpacing:'0.1em', textTransform:'uppercase'}}>Verified Owner</p>
-                    </div>
-                  </div>
-                  {[
-                    'Response rate: 95%',
-                    'Response time: < 1 hour'
-                  ].map(txt => (
-                    <div key={txt} style={{display:'flex', alignItems:'center', gap:8, marginBottom:6}}>
-                      <FaCheckCircle size={11} style={{color:'#8B7355', flexShrink:0}} />
-                      <span className="pd-sans" style={{fontSize:'0.78rem', color:'#6B6355'}}>{txt}</span>
-                    </div>
-                  ))}
-                </div>
+
+
+{/* Owner/Builder/Seller Contact Info */}
+<div style={{marginTop:20, paddingTop:20, borderTop:'1px solid rgba(139,115,85,0.12)'}}>
+  <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:14}}>
+    <div style={{width:44, height:44, background:'#F5F0E8', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid rgba(139,115,85,0.2)', flexShrink:0}}>
+      {property.seller ? (
+        property.seller.profilePic ? (
+          <img 
+            src={getImageUrl(property.seller.profilePic)} 
+            alt={property.seller.name}
+            style={{width:44, height:44, borderRadius:'50%', objectFit:'cover'}}
+            onError={(e) => e.target.style.display = 'none'}
+          />
+        ) : (
+          <FaUserTie style={{color:'#8B7355', fontSize:'1.1rem'}} />
+        )
+      ) : property.builder ? (
+        property.builder.profilePic ? (
+          <img 
+            src={getImageUrl(property.builder.profilePic)} 
+            alt={property.builder.name}
+            style={{width:44, height:44, borderRadius:'50%', objectFit:'cover'}}
+            onError={(e) => e.target.style.display = 'none'}
+          />
+        ) : (
+          <FaUserTie style={{color:'#8B7355', fontSize:'1.1rem'}} />
+        )
+      ) : (
+        <FaUserTie style={{color:'#8B7355', fontSize:'1.1rem'}} />
+      )}
+    </div>
+    <div>
+      <p className="pd-sans" style={{fontWeight:500, color:'#1E1C18', fontSize:'0.875rem'}}>
+        {property.seller ? property.seller.name : (property.builder ? property.builder.name : "Property Owner")}
+      </p>
+      <p className="pd-sans" style={{fontSize:'0.65rem', color:'#8B7355', letterSpacing:'0.1em', textTransform:'uppercase'}}>
+        {property.seller ? 'Seller' : (property.builder ? 'Builder' : 'Verified Owner')}
+      </p>
+      {property.builder?.companyName && !property.seller && (
+        <p className="pd-sans" style={{fontSize:'0.6rem', color:'#A89880', marginTop:2}}>
+          {property.builder.companyName}
+        </p>
+      )}
+      {property.seller && (
+        <>
+          <p className="pd-sans" style={{fontSize:'0.65rem', color:'#8B7355', marginTop:4}}>
+            <FaPhone size={10} style={{marginRight:6}} />
+            {property.seller.phone || 'Contact via chat'}
+          </p>
+          <p className="pd-sans" style={{fontSize:'0.65rem', color:'#8B7355'}}>
+            <FaEnvelope size={10} style={{marginRight:6}} />
+            {property.seller.email}
+          </p>
+        </>
+      )}
+    </div>
+  </div>
+  
+  {/* Show a note if property was purchased from builder */}
+  {property.originalBuilder && property.seller && (
+    <div style={{
+      background: '#F5F0E8',
+      padding: '12px',
+      borderRadius: 2,
+      marginTop: 12,
+      borderLeft: '2px solid #8B7355'
+    }}>
+      <p className="pd-sans" style={{fontSize:'0.7rem', color:'#8B7355', margin:0}}>
+        Originally built by {property.originalBuilder.name || property.originalBuilder.companyName}
+      </p>
+    </div>
+  )}
+</div>
+
               </div>
             </div>
           </div>
@@ -1542,7 +1658,6 @@ const getImageUrl = (imagePath) => {
                 </button>
               </form>
             </div>
-
             <div style={{padding:'12px 32px', background:'#F5F0E8', borderTop:'1px solid rgba(139,115,85,0.1)', display:'flex', alignItems:'center', justifyContent:'center', gap:8}}>
               <div style={{width:6, height:6, borderRadius:'50%', background:'#8B7355', animation:'pulse 2s ease-in-out infinite'}} />
               <span className="pd-sans" style={{fontSize:'0.62rem', letterSpacing:'0.18em', textTransform:'uppercase', color:'#8B7355'}}>Secure Direct Communication</span>
@@ -1550,6 +1665,9 @@ const getImageUrl = (imagePath) => {
           </div>
         </div>
       )}
+
+
+      
       {/* Lightbox Modal */}
 {lightboxOpen && (
   <div style={{

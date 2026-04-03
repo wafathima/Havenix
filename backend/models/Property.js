@@ -89,11 +89,44 @@ const propertySchema = new mongoose.Schema(
     features: [{
       type: String
     }],
-    seller: {
+    
+    owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true
     },
+    
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    
+    builder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    
+    purchasedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    },
+    
+    originalPrice: {
+      type: Number
+    },
+    
+    purchasedAt: {
+      type: Date,
+      default: null
+    },
+    
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    },
+    
     videoUrl: {
       type: String
     },
@@ -116,7 +149,7 @@ const propertySchema = new mongoose.Schema(
       country: String
     },
   
-     averageRating: {
+    averageRating: {
       type: Number,
       default: 0,
       min: 0,
@@ -126,13 +159,37 @@ const propertySchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+      originalPrice: {
+    type: Number,
+    default: null
+  },
+  builder: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    index: true
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
   },
   { timestamps: true }
 );
 
+// Add indexes
 propertySchema.index({ location: 1 });
 propertySchema.index({ price: 1 });
 propertySchema.index({ type: 1 });
 propertySchema.index({ status: 1 });
+propertySchema.index({ builder: 1 });
+propertySchema.index({ owner: 1 });
 
 module.exports = mongoose.model("Property", propertySchema);

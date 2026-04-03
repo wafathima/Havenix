@@ -242,9 +242,13 @@ export default function Tracking() {
         formDataToSend.append('media', file);
       });
       
-      const response = await API.post(`/builder/tracking`, formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      // const response = await API.post(`/builder/tracking`, formDataToSend, {
+      //   headers: { 'Content-Type': 'multipart/form-data' }
+      // });
+
+      const response = await API.post(`/builder/tracking/${selectedProject._id}`, formDataToSend, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
       
       if (response.data.success) {
         toast.success("Tracking entry added successfully");
