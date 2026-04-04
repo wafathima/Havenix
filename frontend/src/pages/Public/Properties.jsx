@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "../../api/axios";
 import { FaSearch, FaFilter, FaBed, FaBath, FaArrowRight, FaHome, FaMapMarkerAlt } from "react-icons/fa";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 
 function Properties() {
   const [properties, setProperties] = useState([]);
@@ -17,33 +17,27 @@ function Properties() {
     bedrooms: ""
   });
 
-useEffect(() => {
-  const fetchProperties = async () => {
-    try {
-      setLoading(true);
-      const { data } = await axios.get("/properties");
-      
-      
-      const transformedProperties = data.map(property => {
-        if (property.status === 'sold') {
-          return { ...property, displayStatus: 'available', originalStatus: property.status };
-        }
-        return { ...property, displayStatus: property.status || 'available' };
-      });
-      
-      setProperties(transformedProperties);
-      setFilteredProperties(transformedProperties);
-    } catch (error) {
-      console.log(error.response?.data || error.message);
-      toast.error("Failed to load properties");
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchProperties();
-}, []);
-
-
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        const { data } = await axios.get("/properties");
+        
+        // Filter out any properties that might be deleted on frontend (backup check)
+        const activeProperties = data.filter(property => !property.isDeleted);
+        
+        // Don't modify the status - keep it as is from backend
+        setProperties(activeProperties);
+        setFilteredProperties(activeProperties);
+      } catch (error) {
+        console.log(error.response?.data || error.message);
+        toast.error("Failed to load properties");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProperties();
+  }, []);
 
   const formatPrice = (price) => {
     if (!price) return "Price on Request";
@@ -80,29 +74,26 @@ useEffect(() => {
 
   const propertyTypes = [...new Set(properties.map(p => p.type).filter(Boolean))];
 
-
   const getStatusStyle = (status) => {
-  const displayStatus = status === 'sold' ? 'available' : status;
-  
-  if (displayStatus === 'pending') return { bg: 'rgba(196,169,122,0.15)', color: '#C4A97A', border: 'rgba(196,169,122,0.3)' };
-  return { bg: 'rgba(139,115,85,0.1)', color: '#8B7355', border: 'rgba(139,115,85,0.25)' };
-};
+    if (status === 'available') return { bg: 'rgba(139,115,85,0.1)', color: '#8B7355', border: 'rgba(139,115,85,0.25)' };
+    if (status === 'pending') return { bg: 'rgba(196,169,122,0.15)', color: '#C4A97A', border: 'rgba(196,169,122,0.3)' };
+    if (status === 'sold') return { bg: 'rgba(100,100,100,0.1)', color: '#666', border: 'rgba(100,100,100,0.25)' };
+    return { bg: 'rgba(139,115,85,0.1)', color: '#8B7355', border: 'rgba(139,115,85,0.25)' };
+  };
 
-  // Add this helper function
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  
-  if (imagePath.startsWith('http')) {
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    if (imagePath.startsWith('/uploads')) {
+      return `http://localhost:5050${imagePath}`;
+    }
+    
     return imagePath;
-  }
-  
-  if (imagePath.startsWith('/uploads')) {
-    return `http://localhost:5050${imagePath}`;
-  }
-  
-  // Fallback
-  return imagePath;
-};
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAF8', fontFamily: "'DM Sans', sans-serif" }}>
@@ -407,86 +398,88 @@ const getImageUrl = (imagePath) => {
         )}
 
         {/* ── PROPERTIES GRID ── */}
-{!loading && filteredProperties.length > 0 && (
-  <div className="pr-grid">
-    {filteredProperties.map((property, idx) => {
-      // Use displayStatus for the badge, not original status
-      const displayStatus = property.status === 'sold' ? 'available' : (property.status || 'available');
-      const statusStyle = getStatusStyle(displayStatus);
-      
-      return (
-        <div key={property._id} className="pr-card" style={{ animationDelay: `${idx * 0.04}s` }}>
+        {!loading && filteredProperties.length > 0 && (
+          <div className="pr-grid">
+            {filteredProperties.map((property, idx) => {
+              const statusStyle = getStatusStyle(property.status);
+              
+              return (
+                <div key={property._id} className="pr-card" style={{ animationDelay: `${idx * 0.04}s` }}>
 
-          {/* Image */}
-          <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden', background: '#EDE8DC' }}>
-            {property.images?.[0] ? (
-              <img
-                src={getImageUrl(property.images?.[0])}
-                alt={property.title}
-                className="pr-card-img"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                onError={e => {
-                  e.target.style.display = 'none';
-                  e.target.parentElement.innerHTML += `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:absolute;inset:0"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C4A97A" stroke-width="1" opacity="0.4"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>`;
-                }}
-              />
-            ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <FaHome style={{ fontSize: '2.5rem', color: '#C4A97A', opacity: 0.3 }} />
-              </div>
-            )}
+                  {/* Image */}
+                  <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden', background: '#EDE8DC' }}>
+                    {property.images?.[0] ? (
+                      <img
+                        src={getImageUrl(property.images[0])}
+                        alt={property.title}
+                        className="pr-card-img"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                        onError={e => {
+                          e.target.style.display = 'none';
+                          const parent = e.target.parentElement;
+                          const fallbackDiv = document.createElement('div');
+                          fallbackDiv.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:absolute;inset:0';
+                          fallbackDiv.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C4A97A" stroke-width="1" opacity="0.4"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+                          parent.appendChild(fallbackDiv);
+                        }}
+                      />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <FaHome style={{ fontSize: '2.5rem', color: '#C4A97A', opacity: 0.3 }} />
+                      </div>
+                    )}
 
-            {/* Gradient overlay */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(30,28,24,0.35) 0%, transparent 50%)', pointerEvents: 'none' }} />
+                    {/* Gradient overlay */}
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(30,28,24,0.35) 0%, transparent 50%)', pointerEvents: 'none' }} />
 
-            {/* Status badge - Show "Available" for both available and sold properties */}
-            <div className="pr-sans" style={{
-              position: 'absolute', top: 14, left: 14,
-              background: statusStyle.bg,
-              color: statusStyle.color,
-              border: `1px solid ${statusStyle.border}`,
-              fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase',
-              fontWeight: 600, padding: '4px 10px', borderRadius: 2,
-              backdropFilter: 'blur(8px)',
-            }}>
-              {displayStatus === 'available' ? 'AVAILABLE' : displayStatus.toUpperCase()}
-            </div>
+                    {/* Status badge */}
+                    <div className="pr-sans" style={{
+                      position: 'absolute', top: 14, left: 14,
+                      background: statusStyle.bg,
+                      color: statusStyle.color,
+                      border: `1px solid ${statusStyle.border}`,
+                      fontSize: '0.6rem', letterSpacing: '0.15em', textTransform: 'uppercase',
+                      fontWeight: 600, padding: '4px 10px', borderRadius: 2,
+                      backdropFilter: 'blur(8px)',
+                    }}>
+                      {property.status?.toUpperCase() || 'AVAILABLE'}
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div style={{ marginBottom: 16, flex: 1 }}>
+                      <h3 className="pr-serif" style={{ fontSize: '1.2rem', fontWeight: 500, color: '#1E1C18', lineHeight: 1.2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {property.title}
+                      </h3>
+                      <p className="pr-sans" style={{ fontSize: '0.78rem', color: '#8B7355', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+                        <FaMapMarkerAlt size={10} />
+                        {property.location || "Location not specified"}
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8B7355" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span className="pr-sans" style={{ fontSize: '0.72rem', color: '#8B7355', letterSpacing: '0.06em' }}>Verified Property</span>
+                      </div>
+                    </div>
+
+                    {/* Price row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 16, borderTop: '1px solid rgba(139,115,85,0.1)' }}>
+                      <div>
+                        <p className="pr-sans" style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A89880', marginBottom: 2 }}>Price</p>
+                        <p className="pr-serif" style={{ fontSize: '1.4rem', fontWeight: 600, color: '#1E1C18', lineHeight: 1 }}>
+                          {formatPrice(property.price)}
+                        </p>
+                      </div>
+                      <Link to={`/property/${property._id}`} className="pr-card-arrow">
+                        <FaArrowRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          {/* Rest of the card remains the same */}
-          <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <div style={{ marginBottom: 16, flex: 1 }}>
-              <h3 className="pr-serif" style={{ fontSize: '1.2rem', fontWeight: 500, color: '#1E1C18', lineHeight: 1.2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {property.title}
-              </h3>
-              <p className="pr-sans" style={{ fontSize: '0.78rem', color: '#8B7355', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-                <FaMapMarkerAlt size={10} />
-                {property.location || "Location not specified"}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8B7355" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="pr-sans" style={{ fontSize: '0.72rem', color: '#8B7355', letterSpacing: '0.06em' }}>Verified Property</span>
-              </div>
-            </div>
-
-            {/* Price row */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 16, borderTop: '1px solid rgba(139,115,85,0.1)' }}>
-              <div>
-                <p className="pr-sans" style={{ fontSize: '0.6rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#A89880', marginBottom: 2 }}>Price</p>
-                <p className="pr-serif" style={{ fontSize: '1.4rem', fontWeight: 600, color: '#1E1C18', lineHeight: 1 }}>
-                  {formatPrice(property.price)}
-                </p>
-              </div>
-              <Link to={`/property/${property._id}`} className="pr-card-arrow">
-                <FaArrowRight size={14} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      );
-    })}
-  </div>
-)}
+        )}
 
         {/* ── EMPTY STATE ── */}
         {!loading && filteredProperties.length === 0 && (
