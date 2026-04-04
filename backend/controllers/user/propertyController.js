@@ -82,13 +82,19 @@ const createProperty = async (req, res) => {
 
 const getAllProperties = async (req, res) => {
   try {
-   
     const properties = await Property.find({
       $or: [
-        { seller: { $exists: true, $ne: null } },
+        // Seller properties that are available and not deleted
+        { 
+          seller: { $exists: true, $ne: null },
+          status: "available",
+          isDeleted: { $ne: true }  // ← Add this
+        },
+        // Builder properties that are available and not deleted
         { 
           builder: { $exists: true, $ne: null },
-          status: "available" 
+          status: "available",
+          isDeleted: { $ne: true }  // ← Add this
         }
       ]
     })
@@ -103,7 +109,6 @@ const getAllProperties = async (req, res) => {
   }
 };
 
-
 const getSingleProperty = async (req, res) => {
   try {
     const property = await Property.findById(req.params.id)
@@ -113,6 +118,11 @@ const getSingleProperty = async (req, res) => {
 
     if (!property)
       return res.status(404).json({ message: "Property not found" });
+
+    // Only block builder-deleted properties
+    if (property.isDeleted === true) {
+      return res.status(404).json({ message: "Property not available" });
+    }
 
     // Increment view count
     property.views = (property.views || 0) + 1;
