@@ -53,7 +53,7 @@ function Profile() {
       let pic = DEFAULT_AVATAR;
       if (user.profilePic) {
         if (user.profilePic.startsWith('http')) pic = user.profilePic;
-        else if (user.profilePic.startsWith('/uploads')) pic = `http://localhost:5050${user.profilePic}`;
+        else if (user.profilePic.startsWith('/uploads')) pic = `${import.meta.env.VITE_API_URL}${user.profilePic}`;
         else if (user.profilePic.startsWith('data:image')) pic = user.profilePic;
       }
       setProfilePic(pic);
