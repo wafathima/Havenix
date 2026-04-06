@@ -25,7 +25,7 @@ const server = http.createServer(app);
 const io = initializeSocket(server);
 
 app.use(cors({
-  origin: "http://localhost:4000",
+  origin: "https://havenixfront.vercel.app/",
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
