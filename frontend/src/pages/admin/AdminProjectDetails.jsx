@@ -65,7 +65,7 @@ const getImageUrl = (imagePath) => {
   if (imagePath.startsWith('http')) return imagePath;
   // Remove any leading slash if present and add the correct base URL
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `http://localhost:5050${cleanPath}`;
+  return `${import.meta.env.VITE_API_URL}${cleanPath}`;
 };
 
   const handleUpdateStatus = async (newStatus) => {
