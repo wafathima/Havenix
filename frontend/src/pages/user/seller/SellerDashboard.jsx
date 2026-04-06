@@ -38,6 +38,8 @@ export default function SellerDashboard() {
   const [sendingRequest, setSendingRequest] = useState(false);
   const [builderPropertiesList, setBuilderPropertiesList] = useState([]);
   const [loadingBuilderPropertiesList, setLoadingBuilderPropertiesList] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+
 
   // Builder Projects State
   const [builderProjects, setBuilderProjects] = useState([]);
@@ -367,6 +369,14 @@ const fetchBuilderPropertiesList = async () => {
     setResponseText("");
     setShowResponseModal(true);
   };
+
+
+  const filteredProperties = properties.filter(p => {
+  if (statusFilter === "all") return true;
+  return p.status === statusFilter;
+});
+
+
 
   // Computed values
   const totalProperties = properties.length;
@@ -1004,46 +1014,83 @@ const fetchBuilderPropertiesList = async () => {
                           </div>
                         </div>
 
-                        <Link 
-                          to={`/property/${p._id}`} 
-                          style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            textDecoration: 'none', 
-                            flexShrink: 0,
-                            pointerEvents: isDeleted ? 'none' : 'auto',
-                            opacity: isDeleted ? 0.5 : 1
-                          }}
-                        >
-                          <div style={{ 
-                            width: 32, height: 32, 
-                            border: `1px solid ${isDeleted ? 'rgba(139,115,85,0.15)' : 'rgba(139,115,85,0.25)'}`, 
-                            borderRadius: 2, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            color: isDeleted ? '#A89880' : '#8B7355', 
-                            transition: 'all 0.2s ease',
-                            cursor: isDeleted ? 'not-allowed' : 'pointer'
-                          }}
-                          onMouseEnter={e => {
-                            if (!isDeleted) {
-                              e.currentTarget.style.background = '#1E1C18';
-                              e.currentTarget.style.borderColor = '#1E1C18';
-                              e.currentTarget.querySelector('svg').style.color = '#F5F0E8';
-                            }
-                          }}
-                          onMouseLeave={e => {
-                            if (!isDeleted) {
-                              e.currentTarget.style.background = 'transparent';
-                              e.currentTarget.style.borderColor = 'rgba(139,115,85,0.25)';
-                              e.currentTarget.querySelector('svg').style.color = '#8B7355';
-                            }
-                          }}
-                        >
-                          <ArrowUpRightIcon style={{ width: 14, height: 14, color: isDeleted ? '#A89880' : '#8B7355' }} />
-                        </div>
-                      </Link>
+              
+<div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+  {/* Edit Button */}
+  {!isDeleted && (
+    <Link 
+      to={`/seller/edit-purchased-property/${p._id}`}
+      style={{ textDecoration: 'none' }}
+    >
+      <div style={{ 
+        width: 32, height: 32, 
+        border: '1px solid rgba(139,115,85,0.25)', 
+        borderRadius: 2, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        color: '#8B7355', 
+        transition: 'all 0.2s ease',
+        cursor: 'pointer'
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = '#1E1C18';
+        e.currentTarget.style.borderColor = '#1E1C18';
+        e.currentTarget.querySelector('svg').style.color = '#F5F0E8';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = 'transparent';
+        e.currentTarget.style.borderColor = 'rgba(139,115,85,0.25)';
+        e.currentTarget.querySelector('svg').style.color = '#8B7355';
+      }}
+    >
+      <PencilIcon style={{ width: 14, height: 14 }} />
+    </div>
+    </Link>
+  )}
+  
+  {/* View Button */}
+  <Link 
+    to={`/property/${p._id}`} 
+    style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      textDecoration: 'none', 
+      pointerEvents: isDeleted ? 'none' : 'auto',
+      opacity: isDeleted ? 0.5 : 1
+    }}
+  >
+    <div style={{ 
+      width: 32, height: 32, 
+      border: `1px solid ${isDeleted ? 'rgba(139,115,85,0.15)' : 'rgba(139,115,85,0.25)'}`, 
+      borderRadius: 2, 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      color: isDeleted ? '#A89880' : '#8B7355', 
+      transition: 'all 0.2s ease',
+      cursor: isDeleted ? 'not-allowed' : 'pointer'
+    }}
+    onMouseEnter={e => {
+      if (!isDeleted) {
+        e.currentTarget.style.background = '#1E1C18';
+        e.currentTarget.style.borderColor = '#1E1C18';
+        e.currentTarget.querySelector('svg').style.color = '#F5F0E8';
+      }
+    }}
+    onMouseLeave={e => {
+      if (!isDeleted) {
+        e.currentTarget.style.background = 'transparent';
+        e.currentTarget.style.borderColor = 'rgba(139,115,85,0.25)';
+        e.currentTarget.querySelector('svg').style.color = '#8B7355';
+      }
+    }}
+  >
+    <ArrowUpRightIcon style={{ width: 14, height: 14, color: isDeleted ? '#A89880' : '#8B7355' }} />
+  </div>
+  </Link>
+</div>
+
                     </div>
                   );
                 })
