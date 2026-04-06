@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "../../api/axios";
 import { FaSearch, FaFilter, FaBed, FaBath, FaArrowRight, FaHome, FaMapMarkerAlt } from "react-icons/fa";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 
 function Properties() {
   const [properties, setProperties] = useState([]);
@@ -23,12 +23,10 @@ function Properties() {
         setLoading(true);
         const { data } = await axios.get("/properties");
         
-        // Filter out any properties that might be deleted on frontend (backup check)
-        const activeProperties = data.filter(property => !property.isDeleted);
-        
-        // Don't modify the status - keep it as is from backend
-        setProperties(activeProperties);
-        setFilteredProperties(activeProperties);
+        // REMOVED: Don't transform sold to available - show actual status
+        // Just set the properties as they come from the database
+        setProperties(data);
+        setFilteredProperties(data);
       } catch (error) {
         console.log(error.response?.data || error.message);
         toast.error("Failed to load properties");
@@ -74,24 +72,26 @@ function Properties() {
 
   const propertyTypes = [...new Set(properties.map(p => p.type).filter(Boolean))];
 
+  // Updated status style function - shows actual status
   const getStatusStyle = (status) => {
-    if (status === 'available') return { bg: 'rgba(139,115,85,0.1)', color: '#8B7355', border: 'rgba(139,115,85,0.25)' };
-    if (status === 'pending') return { bg: 'rgba(196,169,122,0.15)', color: '#C4A97A', border: 'rgba(196,169,122,0.3)' };
-    if (status === 'sold') return { bg: 'rgba(100,100,100,0.1)', color: '#666', border: 'rgba(100,100,100,0.25)' };
-    return { bg: 'rgba(139,115,85,0.1)', color: '#8B7355', border: 'rgba(139,115,85,0.25)' };
+    switch(status) {
+      case 'available':
+        return { bg: 'rgba(139,115,85,0.12)', color: '#8B7355', border: 'rgba(139,115,85,0.3)', label: 'AVAILABLE' };
+      case 'sold':
+        return { bg: 'rgba(107,99,85,0.1)', color: '#6B6355', border: 'rgba(107,99,85,0.25)', label: 'SOLD' };
+      case 'under_contract':
+        return { bg: 'rgba(196,169,122,0.12)', color: '#C4A97A', border: 'rgba(196,169,122,0.35)', label: 'UNDER CONTRACT' };
+      case 'under_construction':
+        return { bg: 'rgba(168,152,128,0.1)', color: '#A89880', border: 'rgba(168,152,128,0.2)', label: 'UNDER CONSTRUCTION' };
+      default:
+        return { bg: 'rgba(139,115,85,0.1)', color: '#8B7355', border: 'rgba(139,115,85,0.25)', label: status?.toUpperCase() || 'AVAILABLE' };
+    }
   };
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '';
-    
-    if (imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    
-    if (imagePath.startsWith('/uploads')) {
-      return `http://localhost:5050${imagePath}`;
-    }
-    
+    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/uploads')) return `http://localhost:5050${imagePath}`;
     return imagePath;
   };
 
@@ -401,7 +401,9 @@ function Properties() {
         {!loading && filteredProperties.length > 0 && (
           <div className="pr-grid">
             {filteredProperties.map((property, idx) => {
-              const statusStyle = getStatusStyle(property.status);
+              // Show actual status from database
+              const actualStatus = property.status || 'available';
+              const statusStyle = getStatusStyle(actualStatus);
               
               return (
                 <div key={property._id} className="pr-card" style={{ animationDelay: `${idx * 0.04}s` }}>
@@ -410,17 +412,13 @@ function Properties() {
                   <div style={{ position: 'relative', aspectRatio: '4/3', overflow: 'hidden', background: '#EDE8DC' }}>
                     {property.images?.[0] ? (
                       <img
-                        src={getImageUrl(property.images[0])}
+                        src={getImageUrl(property.images?.[0])}
                         alt={property.title}
                         className="pr-card-img"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                         onError={e => {
                           e.target.style.display = 'none';
-                          const parent = e.target.parentElement;
-                          const fallbackDiv = document.createElement('div');
-                          fallbackDiv.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:absolute;inset:0';
-                          fallbackDiv.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C4A97A" stroke-width="1" opacity="0.4"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
-                          parent.appendChild(fallbackDiv);
+                          e.target.parentElement.innerHTML += `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:absolute;inset:0"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C4A97A" stroke-width="1" opacity="0.4"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>`;
                         }}
                       />
                     ) : (
@@ -432,7 +430,7 @@ function Properties() {
                     {/* Gradient overlay */}
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(30,28,24,0.35) 0%, transparent 50%)', pointerEvents: 'none' }} />
 
-                    {/* Status badge */}
+                    {/* Status badge - Shows actual status from database */}
                     <div className="pr-sans" style={{
                       position: 'absolute', top: 14, left: 14,
                       background: statusStyle.bg,
@@ -442,11 +440,11 @@ function Properties() {
                       fontWeight: 600, padding: '4px 10px', borderRadius: 2,
                       backdropFilter: 'blur(8px)',
                     }}>
-                      {property.status?.toUpperCase() || 'AVAILABLE'}
+                      {statusStyle.label}
                     </div>
                   </div>
 
-                  {/* Card Content */}
+                  {/* Rest of the card */}
                   <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <div style={{ marginBottom: 16, flex: 1 }}>
                       <h3 className="pr-serif" style={{ fontSize: '1.2rem', fontWeight: 500, color: '#1E1C18', lineHeight: 1.2, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
