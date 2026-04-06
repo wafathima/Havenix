@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5050/api/" 
+  baseURL: "https://havenix-backend.onrender.com/" 
 });
 
 API.interceptors.request.use((config) => {
