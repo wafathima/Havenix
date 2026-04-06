@@ -82,8 +82,4 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5050;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`✅ Expense routes mounted at /api/builder/expenses`);
-  console.log(`✅ Tracking routes mounted at /api/builder/tracking`);
-  console.log(`✅ Project routes mounted at /api/builder`);
 });
