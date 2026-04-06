@@ -276,10 +276,116 @@ const deleteProperty = async (req, res) => {
   }
 };
 
+// Add this new function to propertyController.js
+const updatePurchasedProperty = async (req, res) => {
+  try {
+    console.log("=== UPDATE PURCHASED PROPERTY DEBUG ===");
+    console.log("Property ID:", req.params.id);
+    console.log("Request body:", req.body);
+    
+    const property = await Property.findById(req.params.id);
+
+    if (!property) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    // Check if the current user is the owner (purchaser) of this property
+    if (property.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        message: "Not authorized to edit this property. Only the owner can edit purchased properties." 
+      });
+    }
+
+    // Fields that seller can edit for purchased properties
+    const editableFields = [
+      'title', 'description', 'price', 'location', 'type', 'status',
+      'bedrooms', 'bathrooms', 'area', 'floor', 'totalFloors', 
+      'furnished', 'yearBuilt', 'parking', 'features'
+    ];
+
+    // Update only allowed fields
+    editableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        switch (field) {
+          case 'price':
+          case 'area':
+            property[field] = parseFloat(req.body[field]);
+            break;
+          case 'bedrooms':
+          case 'bathrooms':
+          case 'floor':
+          case 'totalFloors':
+          case 'yearBuilt':
+          case 'parking':
+            property[field] = parseInt(req.body[field]);
+            break;
+          case 'features':
+            if (typeof req.body.features === 'string') {
+              try {
+                property.features = JSON.parse(req.body.features);
+              } catch (e) {
+                property.features = req.body.features.split(',').map(f => f.trim());
+              }
+            } else if (Array.isArray(req.body.features)) {
+              property.features = req.body.features;
+            }
+            break;
+          default:
+            property[field] = req.body[field];
+        }
+      }
+    });
+
+    // Handle image updates for purchased properties
+    if (req.files && req.files.length > 0) {
+      const newImageUrls = req.files.map(file => `/uploads/properties/${file.filename}`);
+      property.images = [...(property.images || []), ...newImageUrls];
+    }
+
+    // Handle image deletions
+    if (req.body.deleteImages) {
+      try {
+        const imagesToDelete = JSON.parse(req.body.deleteImages);
+        imagesToDelete.forEach(imagePath => {
+          const filename = path.basename(imagePath);
+          const fullPath = path.join(__dirname, '../../uploads/properties', filename);
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        });
+        property.images = property.images.filter(url => !imagesToDelete.includes(url));
+      } catch (e) {
+        console.error("Error parsing deleteImages:", e);
+      }
+    }
+
+    await property.save();
+    console.log("Purchased property updated successfully:", property._id);
+
+    res.json({ 
+      success: true, 
+      message: "Property updated successfully", 
+      property 
+    });
+    
+  } catch (error) {
+    console.error("=== ERROR UPDATING PURCHASED PROPERTY ===");
+    console.error("Error message:", error.message);
+    
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to update property",
+      error: error.message 
+    });
+  }
+};
+
 module.exports = {
   getMyProperties,
   getProperty,
   createProperty,
   updateProperty,
-  deleteProperty
+  deleteProperty,
+  updatePurchasedProperty 
 };
+
