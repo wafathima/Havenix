@@ -25,7 +25,7 @@ export const SocketProvider = ({ children }) => {
 
     console.log('Attempting to connect to Socket.IO...');
     
-    const newSocket = io('http://localhost:5050', {
+    const newSocket = io(import.meta.env.VITE_API_URL, {
       withCredentials: true,
       transports: ['websocket', 'polling'],
       reconnection: true,
