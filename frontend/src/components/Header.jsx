@@ -26,7 +26,7 @@ function Header() {
     if (user?.profilePic) {
       let picUrl = user.profilePic;
       if (picUrl.startsWith('/uploads')) {
-        picUrl = `http://localhost:5050${picUrl}`;
+        picUrl = `${import.meta.env.VITE_API_URL}${picUrl}`;
       }
       setProfilePic(picUrl);
     } else {
