@@ -38,6 +38,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Notifications from "./pages/user/Notifications"; 
 import { SocketProvider } from "./context/SocketContext"; 
 import AddProperty from "./pages/user/builder/AddProperty";
+import EditPurchasedProperty from "./pages/user/seller/EditPurchasedProperty";
 
 // Admin Pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -171,6 +172,8 @@ function App() {
               <Route index element={<SellerDashboard />} />
               <Route path="dashboard" element={<SellerDashboard />} />
             </Route>
+
+            <Route path="/seller/edit-purchased-property/:id" element={<EditPurchasedProperty />} />
 
 
             <Route
