@@ -242,9 +242,7 @@ export default function Tracking() {
         formDataToSend.append('media', file);
       });
       
-      // const response = await API.post(`/builder/tracking`, formDataToSend, {
-      //   headers: { 'Content-Type': 'multipart/form-data' }
-      // });
+     
 
       const response = await API.post(`/builder/tracking/${selectedProject._id}`, formDataToSend, {
   headers: { 'Content-Type': 'multipart/form-data' }
@@ -422,12 +420,14 @@ export default function Tracking() {
     return Math.round((completed / milestones.length) * 100);
   };
 
-  const getMediaUrl = (media) => {
-    if (!media || !media.url) return '';
-    if (media.url.startsWith('http')) return media.url;
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5050';
-    return `${baseUrl}${media.url}`;
-  };
+ const getMediaUrl = (media) => {
+  if (!media || !media.url) return '';
+  if (media.url.startsWith('http')) return media.url;
+
+  const cleanPath = media.url.startsWith('/') ? media.url : `/${media.url}`;
+
+  return `${import.meta.env.VITE_API_URL}${cleanPath}`;
+};
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F0E8', fontFamily: "'DM Sans', sans-serif", padding: '40px' }}>
