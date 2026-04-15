@@ -286,7 +286,7 @@ const fetchBuilderPropertiesList = async () => {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return '';
     if (imagePath.startsWith('http')) return imagePath;
-    if (imagePath.startsWith('/uploads')) return `http://localhost:5050${imagePath}`;
+    if (imagePath.startsWith('/uploads')) return `${import.meta.env.VITE_API_URL}${imagePath}`;
     return imagePath;
   };
 
