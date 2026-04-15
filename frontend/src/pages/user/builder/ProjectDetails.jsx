@@ -84,7 +84,7 @@ const getImageUrl = (imagePath) => {
   if (!imagePath) return '';
   if (imagePath.startsWith('http')) return imagePath;
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `http://localhost:5050${cleanPath}`;
+  return `${import.meta.env.VITE_API_URL}${cleanPath}`;
 };
 
 
