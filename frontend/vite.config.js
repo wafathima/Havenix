@@ -23,7 +23,7 @@ export default defineConfig({
     port: 4000,
     proxy: {
       '/api': {
-        target: 'http://localhost:5050',
+        target: 'https://havenix-backend.onrender.com/',
         changeOrigin: true,
       }
     }
