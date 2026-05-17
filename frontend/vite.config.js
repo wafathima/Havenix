@@ -16,20 +16,24 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  plugins: [react()
-    tailwindcss(),       
-           ],
+  plugins: [
+    react(),
+    tailwindcss(),
+  ],
+
   server: {
     port: 4000,
     proxy: {
       '/api': {
-        target: 'https://havenix-backend.onrender.com/',
+        target: 'https://havenix-backend.onrender.com',
         changeOrigin: true,
+        secure: true,
       }
     }
   },
-  // Make sure environment variables are properly loaded
+
   define: {
     'process.env': {}
   }
+})
 })
