@@ -220,30 +220,23 @@ export const SocketProvider = ({ children }) => {
   const [typingUsers, setTypingUsers] = useState({});
   const { user } = useContext(AuthContext);
 
-  const SOCKET_URL = process.env.REACT_APP_API_URL || 'http://localhost:5050';
-
+  // const SOCKET_URL = process.env.REACT_APP_API_URL || 'http://localhost:5050';
+const SOCKET_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+console.log('🔌 Socket URL:', SOCKET_URL);
 
   useEffect(() => {
     if (!user) return;
 
     console.log('Attempting to connect to Socket.IO...');
-    
-    // const newSocket = io('http://localhost:5050', {
-    //   withCredentials: true,
-    //   transports: ['websocket', 'polling'],
-    //   reconnection: true,
-    //   reconnectionAttempts: 5,
-    //   reconnectionDelay: 1000
-    // });
 
-    const newSocket = io(SOCKET_URL, {  // Changed from hardcoded URL
+    const newSocket = io(SOCKET_URL, {
   withCredentials: true,
   transports: ['websocket', 'polling'],
   reconnection: true,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000
 });
-
+      
     newSocket.on('connect', () => {
       console.log('✅ Socket connected successfully! ID:', newSocket.id);
       newSocket.emit('user-authenticated', user._id);
