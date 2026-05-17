@@ -101,20 +101,14 @@
 
 import axios from "axios";
 
-// Get API URL with fallback
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5050";
-console.log('🔧 API Configuration:', {
-  envUrl: process.env.REACT_APP_API_URL,
-  finalUrl: API_URL,
-  nodeEnv: process.env.NODE_ENV
-});
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+console.log('🌐 API URL:', API_URL);
 
 const API = axios.create({
   baseURL: `${API_URL}/api/`,
   withCredentials: true,
-  timeout: 10000 // 10 second timeout
+  timeout: 10000
 });
-
 // Log all requests
 API.interceptors.request.use((config) => {
   console.log(`🚀 [${config.method?.toUpperCase()}] Request to: ${config.baseURL}${config.url}`);
