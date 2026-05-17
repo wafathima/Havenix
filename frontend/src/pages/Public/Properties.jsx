@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "../../api/axios";
+import API from "../../api/axios";
 import { FaSearch, FaFilter, FaBed, FaBath, FaArrowRight, FaHome, FaMapMarkerAlt } from "react-icons/fa";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast";
@@ -22,8 +23,8 @@ function Properties() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const { data } = await axios.get("/properties");
-        
+        // const { data } = await axios.get("/properties");
+        const { data } = await API.get("/properties");
        
         setProperties(data);
         setFilteredProperties(data);
