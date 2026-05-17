@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "../../api/axios";
 import { FaSearch, FaFilter, FaBed, FaBath, FaArrowRight, FaHome, FaMapMarkerAlt } from "react-icons/fa";
 import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 function Properties() {
   const [properties, setProperties] = useState([]);
@@ -23,8 +24,7 @@ function Properties() {
         setLoading(true);
         const { data } = await axios.get("/properties");
         
-        // REMOVED: Don't transform sold to available - show actual status
-        // Just set the properties as they come from the database
+       
         setProperties(data);
         setFilteredProperties(data);
       } catch (error) {
@@ -88,13 +88,25 @@ function Properties() {
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
-    if (imagePath.startsWith('/uploads')) return `${import.meta.env.VITE_API_URL}${imagePath}`;
-    return imagePath;
-  };
+  // const getImageUrl = (imagePath) => {
+  //   if (!imagePath) return '';
+  //   if (imagePath.startsWith('http')) return imagePath;
+  //   if (imagePath.startsWith('/uploads')) return `${import.meta.env.VITE_API_URL}${imagePath}`;
+  //   return imagePath;
+  // };
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return '';
+
+  if (imagePath.startsWith('http')) {
+    return imagePath;
+  }
+
+  return `${API_URL}${imagePath}`;
+};
+  
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAF8', fontFamily: "'DM Sans', sans-serif" }}>
       <style>{`
