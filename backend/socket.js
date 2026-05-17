@@ -131,7 +131,7 @@ const initializeSocket = (server) => {
     origin: function(origin, callback) {
       const allowedOrigins = [
         'http://localhost:4000',
-        'https://havenixfront.vercel.app/'
+        'https://havenixfront.vercel.app'
       ];
       
       if (!origin) return callback(null, true);
