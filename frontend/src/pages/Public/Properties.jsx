@@ -25,7 +25,7 @@ function Properties() {
       try {
         setLoading(true);
         // const { data } = await axios.get("/properties");
-        const { data } = await API.get("/api/properties");
+        const { data } = await API.get("/properties");
        
         setProperties(data);
         setFilteredProperties(data);
