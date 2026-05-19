@@ -598,7 +598,11 @@ function Home() {
                   </span>
                   {property.image || property.images?.[0] ? (
                     <img
-                      src={getImageUrl(property.images?.[0])}
+                      {/* src={getImageUrl(property.images?.[0])} */}
+                        src={
+  getImageUrl(property.image || property.images?.[0]) ||
+  "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800"
+}
                       alt={property.title}
                       className="prop-img w-full h-full"
                       style={{objectFit:'cover', display:'block'}}
