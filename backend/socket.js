@@ -155,7 +155,7 @@ const initializeSocket = (server) => {
   cors: {
     origin: [
       'http://localhost:4000',
-      'https://havenixfront.vercel.app'
+      'https://havenixrealestate.vercel.app/'
     ],
     methods: ["GET", "POST"],
     credentials: true
