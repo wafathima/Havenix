@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AuthContext } from "../../../context/AuthContext";
 import API from "../../../api/axios";
 import { FaArrowRight, FaEye, FaEyeSlash, FaHome, FaDollarSign } from "react-icons/fa";
@@ -8,7 +8,7 @@ import GoogleLogin from "../../../components/GoogleLogin";
 
 function SellerLogin() {
   const { login, redirectBasedOnRole } = useContext(AuthContext);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
