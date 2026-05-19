@@ -229,8 +229,23 @@ console.log('🔌 Socket URL:', SOCKET_URL);
 
     console.log('Attempting to connect to Socket.IO...');
 
-    const newSocket = io(SOCKET_URL, {
+//     const newSocket = io(SOCKET_URL, {
+//   withCredentials: true,
+//   transports: ['websocket', 'polling'],
+//   reconnection: true,
+//   reconnectionAttempts: 5,
+//   reconnectionDelay: 1000
+// });
+
+      const token =
+  localStorage.getItem("adminToken") ||
+  localStorage.getItem("token");
+
+const newSocket = io(SOCKET_URL, {
   withCredentials: true,
+  auth: {
+    token,
+  },
   transports: ['websocket', 'polling'],
   reconnection: true,
   reconnectionAttempts: 5,
