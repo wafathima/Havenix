@@ -33,7 +33,7 @@ const io = initializeSocket(server);
 
 const allowedOrigins = [
   'http://localhost:4000',           
-  'https://havenixrealestate.vercel.app/',     
+  'https://havenixrealestate.vercel.app',     
   
 ];
 
