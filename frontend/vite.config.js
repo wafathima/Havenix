@@ -25,7 +25,7 @@ export default defineConfig({
     port: 4000,
     proxy: {
       '/api': {
-        target: 'https://havenix-backend.onrender.com',
+        target: 'https://havenix-backend-p2gw.onrender.com',
         changeOrigin: true,
         secure: true,
       }
