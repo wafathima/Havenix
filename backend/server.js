@@ -37,21 +37,28 @@ const allowedOrigins = [
   
 ];
 
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin) return callback(null, true);
+// app.use(cors({
+//   origin: function(origin, callback) {
+//     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+//     if (allowedOrigins.indexOf(origin) === -1) {
+//       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+//       return callback(new Error(msg), false);
+//     }
+//     return callback(null, true);
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 
+app.use(cors({
+  origin: [
+    "http://localhost:4000",
+    "https://havenixfront.vercel.app"
+  ],
+  credentials: true
+}));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -103,5 +110,8 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5050;
+// server.listen(PORT, () => {
+// });
 server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
