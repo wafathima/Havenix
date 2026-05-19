@@ -2,6 +2,7 @@ import { createContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { userAPI } from "../api/userApi";
 import { useContext } from "react";
+import toast from "react-hot-toast";
 
 export const AuthContext = createContext();
 
