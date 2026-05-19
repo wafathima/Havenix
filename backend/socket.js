@@ -126,30 +126,45 @@ const initializeSocket = (server) => {
     ? process.env.ALLOWED_ORIGINS.split(',')
     : ['http://localhost:4000', 'http://localhost:3000'];
   
-  const io = socketIO(server, {
-  cors: {
-    origin: function(origin, callback) {
-      const allowedOrigins = [
-        'http://localhost:4000',
-        'https://havenixfront.vercel.app'
-      ];
+  // const io = socketIO(server, {
+  // cors: {
+  //   origin: function(origin, callback) {
+  //     const allowedOrigins = [
+  //       'http://localhost:4000',
+  //       'https://havenixfront.vercel.app'
+  //     ];
       
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        console.log('Socket CORS blocked:', origin);
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+  //     if (!origin) return callback(null, true);
+  //     if (allowedOrigins.indexOf(origin) !== -1) {
+  //       callback(null, true);
+  //     } else {
+  //       console.log('Socket CORS blocked:', origin);
+  //       callback(new Error('Not allowed by CORS'));
+  //     }
+  //   },
+  //   methods: ["GET", "POST"],
+  //   credentials: true,
+  //   transports: ['websocket', 'polling']
+  // },
+  //   allowEIO3: true,
+  //   pingTimeout: 60000,
+  //   pingInterval: 25000
+  // });
+
+  io = socketIO(server, {
+  cors: {
+    origin: [
+      'http://localhost:4000',
+      'https://havenixfront.vercel.app'
+    ],
     methods: ["GET", "POST"],
-    credentials: true,
-    transports: ['websocket', 'polling']
+    credentials: true
   },
-    allowEIO3: true,
-    pingTimeout: 60000,
-    pingInterval: 25000
-  });
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
 
   const onlineUsers = new Map();
 
