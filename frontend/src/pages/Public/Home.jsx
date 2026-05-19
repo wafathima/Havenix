@@ -24,7 +24,7 @@ function Home() {
     const fetchProperties = async () => {
       try {
         setLoading(true);
-        const res = await API.get("/properties");
+        const res = await API.get("/api/properties");
         let properties = [];
         if (Array.isArray(res.data)) {
           properties = res.data;
