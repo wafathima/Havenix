@@ -33,7 +33,7 @@ const io = initializeSocket(server);
 
 const allowedOrigins = [
   'http://localhost:4000',           
-  'https://havenixfront.vercel.app',     
+  'https://havenixrealestate.vercel.app/',     
   
 ];
 
@@ -55,7 +55,7 @@ const allowedOrigins = [
 app.use(cors({
   origin: [
     "http://localhost:4000",
-    "https://havenixfront.vercel.app"
+    "https://havenixrealestate.vercel.app/"
   ],
   credentials: true
 }));
